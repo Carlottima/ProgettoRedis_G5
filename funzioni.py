@@ -5,7 +5,6 @@ from datetime import datetime
 
 def registrati(username: str, password: str, nome: str, cognome: str, redis_conn: redis.Redis):
     # l'utente passa username e password, il database viene interrogato per vedere se sono presenti altre istanze
-    # fatto senza hash per la password perchè non richiesto dal professore
     chiave_utente = f'UTENTE:{username}'
 
     if redis_conn.exists(chiave_utente):
@@ -23,8 +22,7 @@ def registrati(username: str, password: str, nome: str, cognome: str, redis_conn
 
 def login(username: str, password: str, redis_conn: redis.Redis) -> str or bool:  
     # l'utente passa username e password, il database viene interrogato per vedere se sono presenti
-    # in caso siano presenti restituisce l'id (chiave)
-    # restituisce l'id_utente se ha corrispondenza, altrimenti restituisce false
+    # restituisce l'username se ha corrispondenza, altrimenti restituisce false
     chiave_utente = f'UTENTE:{username}'
     password_redis = redis_conn.hget(chiave_utente, 'Password')
     if password_redis == password:
@@ -33,7 +31,7 @@ def login(username: str, password: str, redis_conn: redis.Redis) -> str or bool:
 
 def trova_utenti(username: str, redis_conn: redis.Redis) -> list:
     # L'utente passa un username, anche parziale, e verranno restituiti tutti gli username
-    # anche parzialmente compatibili. Restituisce una lista di username o una lista vuota se non trova nulla.
+    # compatibili. Restituisce una lista di username o una lista vuota se non trova nulla.
 
     pattern = f'UTENTE:{username}*'
     keys_matching_username = redis_conn.keys(pattern)
@@ -73,7 +71,7 @@ def cambia_stato(username: str, redis_conn: redis.Redis) -> str or bool:
 
 
 def ottieni_stato(username: str, redis_conn: redis.Redis) -> bool:
-    # dato un username, restituire lo stato, False se è occupato
+    # dato un username, restituire lo stato, False se è occupato e True se non è occupato
     chiave_utente = f'UTENTE:{username}'
 
     if not redis_conn.exists(chiave_utente):
@@ -86,7 +84,7 @@ def ottieni_stato(username: str, redis_conn: redis.Redis) -> bool:
 
 
 def ottieni_contatti(username: str, redis_conn: redis.Redis) -> list:
-    # funzione che dato un userame trova i suoi contati
+    # funzione che dato un usename trova i suoi contati
     # restituisce una lista
     chiave = f'CONTATTI_UTENTE:{username}'
     if redis_conn.exists(chiave):
@@ -124,10 +122,9 @@ def leggi_messaggi(mittente: str, destinatario: str, redis_conn: redis.Redis) ->
     pos_mittente = chiave.index(mittente)
 
     if not chiave_esiste:
-        return []  # Return an empty list instead of False
-
+        return []  
     messaggi = redis_conn.lrange(chiave_str, 0, -1)
-    messaggi = messaggi[::-1]  # Inverti l'ordine dei messaggi
+    messaggi = messaggi[::-1]  # Inverte l'ordine dei messaggi
     result = []
 
     for messaggio in messaggi:
