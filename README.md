@@ -3,7 +3,7 @@ redis == 5.0.1
 
 - Librerie installate : 
     pip install redis
-  Le ulteriori librerie sono già installate di default
+Le ulteriori librerie sono già installate di default
 
 
 - Credenziali per accedere al db 
