@@ -21,7 +21,7 @@ def registrati(username: str, password: str, nome: str, cognome: str, redis_conn
     return True
 
 
-def login(username: str, password: str, redis_conn: redis.Redis) -> str or bool:  # BASE
+def login(username: str, password: str, redis_conn: redis.Redis) -> str or bool:  
     # l'utente passa username e password, il database viene interrogato per vedere se sono presenti
     # in caso siano presenti restituisce l'id (chiave)
     # restituisce l'id_utente se ha corrispondenza, altrimenti restituisce false
@@ -31,13 +31,18 @@ def login(username: str, password: str, redis_conn: redis.Redis) -> str or bool:
         return username
     return False
 
+def trova_utenti(username: str, redis_conn: redis.Redis) -> list:
+    # L'utente passa un username, anche parziale, e verranno restituiti tutti gli username
+    # anche parzialmente compatibili. Restituisce una lista di username o una lista vuota se non trova nulla.
 
-def trova_utenti(username: str, redis_conn: redis.Redis) -> list:  # GABRIEL
-    # l'utente passe un username, anche parziale, e verranno restituiti tutti gli username
-    # anche parzialmente compatibili
-    # restutuisce una lista di username o una lista vuota se non trova nulla
-    ...
+    pattern = f'UTENTE:{username}*'
+    keys_matching_username = redis_conn.keys(pattern)
 
+    usernames = [key.split(':')[1] for key in keys_matching_username]
+
+    return usernames
+
+   
 
 def aggiungi_utente(username_utente: str, username_contatto: str, redis_conn: redis.Redis) -> bool:
     # viene passato un username e viene aggiunto alla lista dei contatti.
@@ -92,7 +97,7 @@ def ottieni_contatti(username: str, redis_conn: redis.Redis) -> list:
 
 
 def messaggi(mittente: str, destinatario: str, testo: str, redis_conn: redis.Redis) -> int:  # BASE
-    # l'untente inserisce il destinatario, ed il testo.
+    # l'utente inserisce il destinatario, ed il testo.
     # restituisce 2 se va tutto bene, restituisce 1 se l'utente è occupato
     # controllo sullo stato del destinatario
     if not ottieni_stato(destinatario, redis_conn):
@@ -108,8 +113,8 @@ def messaggi(mittente: str, destinatario: str, testo: str, redis_conn: redis.Red
     return 2
 
 
-def leggi_messaggi(mittente: str, destinatario: str, redis_conn: redis.Redis) -> list or bool:  # CARLOTTA
-    # restituisce tutti i valori da tra due utenti
+def leggi_messaggi(mittente: str, destinatario: str, redis_conn: redis.Redis) -> list or bool:
+    # restituisce tutti i valori tra due utenti in ordine temporale inverso
     # ogni elemento della lista è un testo mandato da un utente
     # restituisce False se non trova la chat tra i due utenti
 
@@ -117,20 +122,29 @@ def leggi_messaggi(mittente: str, destinatario: str, redis_conn: redis.Redis) ->
     chiave_str = f'{chiave[0]}{chiave[1]}'
     chiave_esiste = redis_conn.exists(chiave_str)
     pos_mittente = chiave.index(mittente)
+
     if not chiave_esiste:
-        return False
+        return []  # Return an empty list instead of False
+
     messaggi = redis_conn.lrange(chiave_str, 0, -1)
+    messaggi = messaggi[::-1]  # Inverti l'ordine dei messaggi
     result = []
+
     for messaggio in messaggi:
         timestamp = messaggio[:10]
         testo = messaggio[11:]
+
         if int(messaggio[10]) == pos_mittente:
             prefisso = f"{datetime.utcfromtimestamp(int(timestamp))}>"  # messaggio inviato
         else:
             prefisso = f"{datetime.utcfromtimestamp(int(timestamp))}<"  # messaggio ricevuto
+
         messaggio_formattato = f"{prefisso} {testo}"
         result.append(messaggio_formattato)
+
     return result
+
+
 
 
 def hai_una_nuova_notifica(id_utente: str, redis_conn: redis.Redis):

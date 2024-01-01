@@ -1,10 +1,9 @@
 import threading
-
 import funzioni
 import redis
 
-id_utente = 'lucabarbetta'
-if __name__ == '__main__':
+def main():
+    id_utente = 'lucabarbetta'
 
     r = redis.Redis(
         host="redis-10797.c55.eu-central-1-1.ec2.cloud.redislabs.com",
@@ -26,6 +25,7 @@ if __name__ == '__main__':
                 print('4. Aggiungi nuovo contatto')
                 print('5. Manda messaggio')
                 print('6. Vedi cronologia')
+                print('7. Cambia modalità DnD')
                 sel = input('')
                 try:
                     sel = int(sel)
@@ -41,7 +41,7 @@ if __name__ == '__main__':
                     if stato:
                         print(f'Stato cambiato con successo, stato attuale: {stato}')
                 if sel == 3:
-                    username_contatto = input('Inserisci username da cercare (anche parziale)')
+                    username_contatto = input('Inserisci username da cercare (anche parziale) ')
                     utenti = funzioni.trova_utenti(username=username_contatto, redis_conn=r)
                     if utenti:
                         for elem in utenti:
@@ -94,6 +94,10 @@ if __name__ == '__main__':
                     chat = funzioni.leggi_messaggi(mittente=id_utente, destinatario=id_destinatario, redis_conn=r)
                     for elem in chat:
                         print(elem)
+                if sel == 7:
+                    nuovo_stato = funzioni.cambia_stato(id_utente, r)
+                    print(f'Modalità DnD cambiata con successo, nuova modalità: {nuovo_stato}')
+
         else:
             while 1:
                 print('1. Esci')
@@ -120,7 +124,6 @@ if __name__ == '__main__':
                         print('Registrazione avvenuta con successo')
                         break
                     print('Username già preso')
-                    break
             if sel == 3:
                 while 1:
                     user = input('Inserisci username: ')
@@ -130,4 +133,6 @@ if __name__ == '__main__':
                         id_utente = out
                         break
                     print('Username o Password sbagliati')
-                    break
+
+if __name__ == '__main__':
+    main()
